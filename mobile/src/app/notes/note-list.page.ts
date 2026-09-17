@@ -18,7 +18,9 @@ import { SyncService } from '../core/sync/sync.service';
 
     <ion-content class="ion-padding">
       <ion-button expand="block" (click)="newNote()">New Note</ion-button>
-      <ion-button expand="block" fill="outline" (click)="sync()">Sync with Laravel</ion-button>
+      <ion-button expand="block" fill="outline" (click)="sync()" [disabled]="syncing">
+        {{ syncing ? 'Syncing...' : 'Sync with Laravel' }}
+      </ion-button>
       <p *ngIf="syncMessage">{{ syncMessage }}</p>
 
       <ion-list>
@@ -36,6 +38,7 @@ import { SyncService } from '../core/sync/sync.service';
 export class NoteListPage implements OnInit {
   notes: Note[] = [];
   syncMessage = '';
+  syncing = false;
 
   constructor(
     private readonly database: NoteDatabaseService,
@@ -64,13 +67,20 @@ export class NoteListPage implements OnInit {
   }
 
   async sync(): Promise<void> {
+    if (this.syncing) return;
+
+    this.syncing = true;
     this.syncMessage = 'Syncing...';
+
     try {
       await this.syncService.sync();
       await this.refresh();
-      this.syncMessage = 'Sync completed.';
-    } catch {
-      this.syncMessage = 'Server unavailable. Local changes are kept.';
+      this.syncMessage = 'Sync completed successfully.';
+    } catch (error) {
+      console.error('Note sync failed:', error);
+      this.syncMessage = 'Sync failed. Check the Laravel API URL, server, CORS, and browser console.';
+    } finally {
+      this.syncing = false;
     }
   }
 }
