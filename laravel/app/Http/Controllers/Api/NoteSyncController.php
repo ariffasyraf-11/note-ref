@@ -17,17 +17,12 @@ class NoteSyncController extends Controller
             $query->where('updated_at', '>', Carbon::parse($request->string('updated_since')));
         }
 
-        $notes = $query->get()->map(fn (Note $note) => [
-            'uuid' => $note->uuid,
-            'title' => $note->title,
-            'content' => $note->content,
-            'updatedAt' => $note->updated_at?->toISOString(),
-            'deletedAt' => $note->deleted_at?->toISOString(),
-        ])->values();
+        $notes = $query->get();
+        $cursor = now()->toISOString();
 
         return response()->json([
             'notes' => $notes,
-            'cursor' => now()->toISOString(),
+            'cursor' => $cursor,
         ]);
     }
 
