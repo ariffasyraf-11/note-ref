@@ -1,0 +1,14 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+
+ion-content {
+  --padding-bottom: 24px;
+}
+
+ion-item p {
+  margin: 6px 0;
+}
