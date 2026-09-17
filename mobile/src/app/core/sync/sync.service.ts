@@ -1,17 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_CONFIG } from '../config/api.config';
 import { Note } from '../models/note.model';
 import { NoteDatabaseService } from '../database/note-database.service';
 
 interface SyncResponse {
   accepted: string[];
+}
+
+interface PullResponse {
   notes: Note[];
+  cursor: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class SyncService {
-  private readonly apiUrl = 'http://localhost:8000/api';
+  private readonly apiUrl = API_CONFIG.baseUrl;
   private lastSync: string | null = null;
 
   constructor(
@@ -33,8 +38,10 @@ export class SyncService {
       ? `${this.apiUrl}/notes?updated_since=${encodeURIComponent(this.lastSync)}`
       : `${this.apiUrl}/notes`;
 
-    const response = await firstValueFrom(this.http.get<{ notes: Note[]; cursor: string }>(url));
-    for (const note of response.notes) await this.database.save(note);
+    const response = await firstValueFrom(this.http.get<PullResponse>(url));
+    for (const note of response.notes) {
+      await this.database.save({ ...note, syncStatus: 'synced' });
+    }
     this.lastSync = response.cursor;
   }
 }
