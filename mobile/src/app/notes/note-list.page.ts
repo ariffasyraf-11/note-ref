@@ -1,22 +1,36 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { IonButton, IonContent, IonHeader, IonItem, IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { NoteDatabaseService } from '../core/database/note-database.service';
 import { Note } from '../core/models/note.model';
 import { SyncService } from '../core/sync/sync.service';
 
 @Component({
   selector: 'app-note-list',
+  standalone: true,
+  imports: [CommonModule, IonButton, IonContent, IonHeader, IonItem, IonList, IonTitle, IonToolbar],
   template: `
-    <main>
-      <h1>My Notes</h1>
-      <button (click)="newNote()">New note</button>
-      <button (click)="sync()">Sync</button>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Note Ref</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <ion-button expand="block" (click)="newNote()">New Note</ion-button>
+      <ion-button expand="block" fill="outline" (click)="sync()">Sync with Laravel</ion-button>
       <p *ngIf="syncMessage">{{ syncMessage }}</p>
-      <article *ngFor="let note of notes">
-        <h2>{{ note.title }}</h2>
-        <p>{{ note.content }}</p>
-        <small>{{ note.syncStatus }}</small>
-      </article>
-    </main>
+
+      <ion-list>
+        <ion-item *ngFor="let note of notes">
+          <div>
+            <strong>{{ note.title }}</strong>
+            <p>{{ note.content || 'Empty note' }}</p>
+            <small>{{ note.syncStatus }}</small>
+          </div>
+        </ion-item>
+      </ion-list>
+    </ion-content>
   `,
 })
 export class NoteListPage implements OnInit {
@@ -40,8 +54,8 @@ export class NoteListPage implements OnInit {
     const now = new Date().toISOString();
     await this.database.save({
       uuid: crypto.randomUUID(),
-      title: 'New note',
-      content: '',
+      title: `New note ${this.notes.length + 1}`,
+      content: 'Created locally. Press Sync to send it to Laravel.',
       updatedAt: now,
       deletedAt: null,
       syncStatus: 'pending',
@@ -54,9 +68,9 @@ export class NoteListPage implements OnInit {
     try {
       await this.syncService.sync();
       await this.refresh();
-      this.syncMessage = 'Synced';
+      this.syncMessage = 'Sync completed.';
     } catch {
-      this.syncMessage = 'Offline or server unavailable. Local notes are kept.';
+      this.syncMessage = 'Server unavailable. Local changes are kept.';
     }
   }
 }
