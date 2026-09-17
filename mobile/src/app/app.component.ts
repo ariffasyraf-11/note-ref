@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
-import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+import { IonApp } from '@ionic/angular/standalone';
+import { NoteListPage } from './notes/note-list.page';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonRouterOutlet],
+  imports: [IonApp, NoteListPage],
   template: `
     <ion-app>
-      <ion-router-outlet></ion-router-outlet>
+      <app-note-list></app-note-list>
     </ion-app>
   `,
 })
