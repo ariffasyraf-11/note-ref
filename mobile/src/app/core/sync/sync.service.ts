@@ -9,8 +9,16 @@ interface SyncResponse {
   accepted: string[];
 }
 
+interface ApiNote {
+  uuid: string;
+  title: string;
+  content: string | null;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
 interface PullResponse {
-  notes: Note[];
+  notes: ApiNote[];
   cursor: string;
 }
 
@@ -29,7 +37,9 @@ export class SyncService {
 
     if (pending.length) {
       const response = await firstValueFrom(
-        this.http.post<SyncResponse>(`${this.apiUrl}/notes/sync`, { notes: pending }),
+        this.http.post<SyncResponse>(`${this.apiUrl}/notes/sync`, {
+          notes: pending,
+        }),
       );
       await this.database.markSynced(response.accepted);
     }
@@ -39,9 +49,20 @@ export class SyncService {
       : `${this.apiUrl}/notes`;
 
     const response = await firstValueFrom(this.http.get<PullResponse>(url));
-    for (const note of response.notes) {
-      await this.database.save({ ...note, syncStatus: 'synced' });
+
+    for (const apiNote of response.notes) {
+      const note: Note = {
+        uuid: apiNote.uuid,
+        title: apiNote.title,
+        content: apiNote.content ?? '',
+        updatedAt: apiNote.updatedAt,
+        deletedAt: apiNote.deletedAt,
+        syncStatus: 'synced',
+      };
+
+      await this.database.save(note);
     }
+
     this.lastSync = response.cursor;
   }
 }
