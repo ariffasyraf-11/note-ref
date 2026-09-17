@@ -1,33 +1,56 @@
 import { Injectable } from '@angular/core';
 import { Note } from '../models/note.model';
 
+const STORAGE_KEY = 'note-ref.notes';
+
 /**
- * Small database abstraction. Native builds should back this service with
- * @capacitor-community/sqlite. Keeping SQLite access behind this service
- * makes the sync layer independent from the storage implementation.
+ * Browser-safe local database adapter for `ionic serve`.
+ *
+ * Native builds can replace the persistence implementation with
+ * @capacitor-community/sqlite while keeping this service API unchanged.
  */
 @Injectable({ providedIn: 'root' })
 export class NoteDatabaseService {
-  private notes = new Map<string, Note>();
+  private read(): Note[] {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as Note[];
+    } catch {
+      return [];
+    }
+  }
+
+  private write(notes: Note[]): void {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  }
 
   async list(): Promise<Note[]> {
-    return [...this.notes.values()]
-      .filter(note => !note.deletedAt)
+    return this.read()
+      .filter((note) => !note.deletedAt)
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
   async save(note: Note): Promise<void> {
-    this.notes.set(note.uuid, note);
+    const notes = this.read();
+    const index = notes.findIndex((item) => item.uuid === note.uuid);
+
+    if (index >= 0) {
+      notes[index] = note;
+    } else {
+      notes.push(note);
+    }
+
+    this.write(notes);
   }
 
   async pending(): Promise<Note[]> {
-    return [...this.notes.values()].filter(note => note.syncStatus === 'pending');
+    return this.read().filter((note) => note.syncStatus === 'pending');
   }
 
   async markSynced(uuids: string[]): Promise<void> {
-    for (const uuid of uuids) {
-      const note = this.notes.get(uuid);
-      if (note) this.notes.set(uuid, { ...note, syncStatus: 'synced' });
-    }
+    const accepted = new Set(uuids);
+    const notes = this.read().map((note) =>
+      accepted.has(note.uuid) ? { ...note, syncStatus: 'synced' as const } : note,
+    );
+    this.write(notes);
   }
 }
