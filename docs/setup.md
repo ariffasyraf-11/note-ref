@@ -4,12 +4,12 @@ This guide is written for a first-time setup on a Windows development PC.
 
 ## 1. Repository
 
-Checkout the feature branch:
+Checkout the synchronization-fix branch:
 
 ```bash
 git clone https://github.com/ariffasyraf-11/note-ref.git
 cd note-ref
-git checkout feature/ionic-sqlite-laravel-sync
+git checkout sync-fixes
 ```
 
 ## 2. Mobile prerequisites
@@ -27,7 +27,7 @@ npm install
 npm start
 ```
 
-The browser app should open through `ionic serve`. The browser version is intentionally independent of native SQLite for easy development and UI testing.
+The browser app should open through `ionic serve`, normally at `http://localhost:8100`.
 
 ## 3. Laravel backend
 
@@ -50,6 +50,7 @@ Create the database in MySQL, then run:
 
 ```bash
 php artisan migrate
+php artisan optimize:clear
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
@@ -58,7 +59,40 @@ The API routes supplied by this prototype are:
 - `GET /api/notes` — pull notes, optionally using `updated_since`
 - `POST /api/notes/sync` — push pending mobile changes
 
-## 4. Browser mobile + Laravel sync
+## 4. CORS — important for Ionic sync
+
+`ionic serve` runs on a different origin from Laravel. A JSON `POST` triggers a browser CORS preflight request using `OPTIONS` before Laravel receives the actual `POST`.
+
+This branch includes:
+
+```text
+laravel/config/cors.php
+```
+
+Copy that file into the Laravel application's `config/cors.php`.
+
+The development policy allows:
+
+```text
+http://localhost:8100
+http://127.0.0.1:8100
+```
+
+and allows the `OPTIONS` preflight and `POST` request through `allowed_methods => ['*']`.
+
+After copying the configuration, run:
+
+```bash
+php artisan optimize:clear
+```
+
+Then restart `php artisan serve`.
+
+If the browser is opened on another port, use that exact origin in `allowed_origins`.
+
+Do not solve CORS by connecting the browser directly to MySQL. MySQL must remain behind Laravel.
+
+## 5. Browser mobile + Laravel sync
 
 With Laravel running on the development PC, the browser mobile app uses:
 
@@ -79,19 +113,52 @@ cd mobile
 npm start
 ```
 
-Create a note and press **Sync with Laravel**. The request travels from Ionic to Laravel; Laravel writes to MySQL and returns the accepted UUIDs. The mobile app then pulls server changes.
+Create a note and press **Sync with Laravel**.
 
-## 5. CORS
-
-If the browser reports a CORS error, configure the Laravel application's CORS policy to allow the Ionic development origin, normally:
+Expected flow:
 
 ```text
-http://localhost:8100
+Ionic :8100
+   |
+   | OPTIONS /api/notes/sync  <- CORS preflight
+   | POST /api/notes/sync     <- JSON note data
+   v
+Laravel :8000
+   |
+   v
+MySQL :3306
 ```
 
-Do not solve CORS by connecting the browser directly to MySQL. MySQL must remain behind Laravel.
+After the push succeeds, the mobile app performs `GET /api/notes` to pull server changes.
 
-## 6. Physical phone testing
+## 6. Troubleshooting the POST / OPTIONS error
+
+Open the browser DevTools → **Network** and press **Sync with Laravel**.
+
+### OPTIONS returns 404/405
+
+Check that `laravel/config/cors.php` exists in the actual Laravel project, not only in this repository. Then run:
+
+```bash
+php artisan optimize:clear
+```
+
+Restart the Laravel server.
+
+### OPTIONS succeeds but POST fails
+
+Check the POST response status:
+
+- `422` — Laravel validation rejected the JSON payload.
+- `500` — check `storage/logs/laravel.log` and the MySQL configuration.
+- `404` — verify the API route with `php artisan route:list --path=api`.
+- `419` — an unexpected CSRF setup is being applied; the API route should not require the web CSRF flow.
+
+### Browser says CORS policy blocked the request
+
+Make sure the origin shown by the browser exactly matches one of the configured origins. `localhost` and `127.0.0.1` are different browser origins.
+
+## 7. Physical phone testing
 
 For a phone connected to the same LAN as the PC, replace `localhost` in `api.config.ts` with the PC's LAN IP:
 
@@ -99,11 +166,11 @@ For a phone connected to the same LAN as the PC, replace `localhost` in `api.con
 http://192.168.1.10:8000/api
 ```
 
-Use the actual LAN IP of the development PC. Ensure Windows Firewall allows the Laravel development server port and both devices are on the same network.
+Add the Ionic origin used by the device/browser to the Laravel CORS configuration if required. Ensure Windows Firewall allows the Laravel development server port and both devices are on the same network.
 
-## 7. SQLite/native stage
+## 8. SQLite/native stage
 
-`@capacitor-community/sqlite` is included as the intended native database technology, but the browser prototype currently uses an in-memory adapter. This keeps `ionic serve` simple and avoids requiring Android Studio just to test the application UI and API flow.
+`@capacitor-community/sqlite` is included as the intended native database technology. The browser version currently uses `localStorage` so `ionic serve` testing persists notes across page reloads.
 
 When native testing begins:
 
@@ -115,22 +182,22 @@ npx cap sync
 
 Then replace the browser database adapter implementation with the SQLite-backed implementation while keeping the same `NoteDatabaseService` interface.
 
-## 8. Important architecture rule
+## 9. Important architecture rule
 
 ```text
-Mobile SQLite
-     |
-     | HTTP / JSON
-     v
-Laravel API
-     |
-     | Eloquent
-     v
-MySQL
+Mobile SQLite / browser storage
+             |
+             | HTTP / JSON
+             v
+        Laravel API
+             |
+             | Eloquent
+             v
+           MySQL
 ```
 
-The mobile application does **not** connect directly to MySQL. SQLite is the local/offline database; Laravel is the secure server/API boundary; MySQL is the central server database.
+The mobile application does **not** connect directly to MySQL. SQLite is the local/offline database; Laravel is the server/API boundary; MySQL is the central server database.
 
-## 9. Current limitations
+## 10. Current limitations
 
 This is a prototype. Authentication, per-user note ownership, secure production CORS configuration, background synchronization, retry queues, and advanced conflict resolution should be added before production use.
