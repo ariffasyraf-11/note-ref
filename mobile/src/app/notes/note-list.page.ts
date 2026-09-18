@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   IonButton,
   IonContent,
@@ -21,6 +22,7 @@ import { SyncService } from '../core/sync/sync.service';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     IonButton,
     IonContent,
     IonHeader,
@@ -155,10 +157,12 @@ export class NoteListPage implements OnInit {
     const confirmed = window.confirm(`Delete "${note.title}"?`);
     if (!confirmed) return;
 
+    const now = new Date().toISOString();
+
     await this.database.save({
       ...note,
-      deletedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      deletedAt: now,
+      updatedAt: now,
       syncStatus: 'pending',
     });
 
