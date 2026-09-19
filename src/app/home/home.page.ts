@@ -13,7 +13,7 @@ import {
   IonTextarea,
   IonTitle,
   IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 interface Note {
   id: string;
