@@ -8,7 +8,8 @@ This branch contains the Ionic/Angular standalone mobile prototype for Note Ref.
 - Create, edit and delete notes
 - Offline browser persistence with `localStorage`
 - Mobile-oriented responsive UI
-- Prepared for later Laravel API and native SQLite integration
+- Environment-specific API configuration prepared for later Laravel integration
+- Capacitor Android dependency prepared for native development
 
 ## Branch relationship
 
@@ -34,22 +35,40 @@ ionic serve
 
 Open the local URL shown by Ionic.
 
-For a production browser build:
+Run the normal checks before committing:
 
 ```bash
+npm run lint
+npm test
 npm run build
 ```
 
-or:
+For a production browser build:
 
 ```bash
-ionic build --configuration production
+npm run build -- --configuration production
 ```
 
 See:
 
 - `docs/mobile-development.md`
 - `docs/mobile-production.md`
+
+## Configuration
+
+Development API configuration is prepared in:
+
+```
+src/environments/environment.ts
+```
+
+Production API configuration is prepared in:
+
+```
+src/environments/environment.prod.ts
+```
+
+The current UI does not call the API yet; notes are still stored in browser `localStorage`.
 
 ## Planned architecture
 

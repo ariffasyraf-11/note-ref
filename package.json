@@ -1,7 +1,7 @@
 {
-  "name": "test-app",
+  "name": "note-ref-mobile",
   "version": "0.0.1",
-  "author": "Ionic Framework",
+  "author": "Note Ref",
   "homepage": "https://ionicframework.com/",
   "scripts": {
     "ng": "ng",
@@ -44,5 +44,5 @@
     "typescript-eslint": "^8.61.0",
     "vitest": "~4.0.18"
   },
-  "description": "An Ionic project"
+  "description": "Note Ref Ionic Angular mobile prototype"
 }

@@ -1,8 +1,9 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'test-app',
+  // Change appId before production release to an identifier owned by the project.
+  appId: 'com.example.noteref',
+  appName: 'Note Ref',
   webDir: 'www'
 };
 

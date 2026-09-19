@@ -6,7 +6,7 @@ A production build should use:
 
 - HTTPS API endpoints
 - production Laravel configuration
-- proper CORS rules
+- appropriate CORS rules
 - native SQLite instead of browser localStorage when offline storage is required
 - API authentication when user-specific data is introduced
 - Android/iOS release signing
@@ -17,11 +17,18 @@ A production build should use:
 
 Production mobile builds must point to the real HTTPS API.
 
-Example:
+The prototype now provides environment configuration in:
+
+- `src/environments/environment.ts`
+- `src/environments/environment.prod.ts`
+
+Example production value:
 
 ```
 https://api.example.com/api
 ```
+
+Replace the example domain with the actual deployed Laravel API before release.
 
 Do not use:
 
@@ -69,22 +76,27 @@ ionic build --configuration production
 
 Then synchronize Capacitor:
 
-```npx cap sync
+```bash
+npx cap sync
 ```
 
 For Android:
 
-```npx cap open android
+```bash
+npx cap open android
 ```
 
 Build the signed release application from Android Studio/Gradle using the project's release signing configuration.
 
 For iOS:
 
-```npx cap open ios
+```bash
+npx cap open ios
 ```
 
 Configure signing, provisioning and distribution through Xcode.
+
+The Android Capacitor package is already installed in this prototype, but the generated `android/` project is intentionally not committed. Run `npx cap add android` when beginning native Android development.
 
 ## 5. Environment separation
 
@@ -100,6 +112,8 @@ Maintain separate values for at least:
 Do not solve environment changes by manually editing source files before every build.
 
 Use Angular build configurations/environment files or another controlled configuration mechanism appropriate to the project.
+
+For a physical device, remember that `localhost` means the device itself. Use the development machine's LAN address when the API is running on the development PC.
 
 ## 6. CORS
 
@@ -166,6 +180,7 @@ Before release:
 - [ ] Conflict handling tested.
 - [ ] Delete/restore behavior tested.
 - [ ] Android/iOS release signing configured.
+- [ ] Production `appId` configured.
 - [ ] App version updated.
 - [ ] Production build tested on a physical device.
 - [ ] No secrets committed to Git.
