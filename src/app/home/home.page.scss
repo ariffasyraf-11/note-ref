@@ -3,53 +3,17 @@
   margin: 0 auto;
   padding: 24px 16px 40px;
 }
-
-.intro {
-  margin-bottom: 18px;
-}
-
-.intro h1 {
-  margin: 0 0 6px;
-  font-size: 28px;
-}
-
-.intro p {
-  margin: 0 0 10px;
-  color: var(--ion-color-medium);
-}
-
-.sync-message {
-  display: block;
-  margin-top: 6px;
-  color: var(--ion-color-medium);
-}
-
-.editor {
-  display: grid;
-  gap: 14px;
-}
-
-.editor-actions {
-  display: grid;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-ion-item {
-  --padding-start: 12px;
-  --inner-padding-end: 8px;
-}
-
-ion-label h2 {
-  font-weight: 600;
-}
-
-ion-label p {
-  white-space: pre-line;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-ion-label small {
-  color: var(--ion-color-medium);
-}
+.intro { margin-bottom: 18px; }
+.intro h1 { margin: 0 0 6px; font-size: 28px; }
+.intro p { margin: 0 0 10px; color: var(--ion-color-medium); }
+.sync-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sync-message { color: var(--ion-color-medium); }
+.sync-success { color: var(--ion-color-success); }
+.sync-error { color: var(--ion-color-danger); }
+ion-spinner { width: 16px; height: 16px; }
+.editor { display: grid; gap: 14px; }
+.editor-actions { display: grid; gap: 8px; margin-top: 8px; }
+ion-item { --padding-start: 12px; --inner-padding-end: 8px; }
+ion-label h2 { font-weight: 600; }
+ion-label p { white-space: pre-line; overflow: hidden; text-overflow: ellipsis; }
+ion-label small { color: var(--ion-color-medium); }
