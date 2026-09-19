@@ -12,6 +12,18 @@
     <div class="intro" *ngIf="!editing">
       <h1>My Notes</h1>
       <p>Simple offline-first note prototype.</p>
+
+      <ion-button
+        size="small"
+        fill="outline"
+        (click)="sync()"
+        [disabled]="syncing"
+      >
+        <ion-spinner *ngIf="syncing" name="crescent"></ion-spinner>
+        <span *ngIf="!syncing">Sync</span>
+      </ion-button>
+
+      <small *ngIf="syncMessage" class="sync-message">{{ syncMessage }}</small>
     </div>
 
     <section class="editor" *ngIf="editing">
@@ -50,7 +62,9 @@
         <ion-label>
           <h2>{{ note.title }}</h2>
           <p>{{ note.content || 'Empty note' }}</p>
-          <small>{{ note.updatedAt | date:'short' }}</small>
+          <small>
+            {{ note.updatedAt | date:'short' }} · {{ note.syncStatus }}
+          </small>
         </ion-label>
         <ion-button slot="end" fill="clear" (click)="startEdit(note)">Edit</ion-button>
         <ion-button slot="end" fill="clear" color="danger" (click)="remove(note)">Delete</ion-button>
