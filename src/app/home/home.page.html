@@ -1,20 +1,67 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+    <ion-title>Note Ref</ion-title>
+    <ion-buttons slot="end">
+      <ion-button *ngIf="!editing" (click)="startNew()">New</ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <div class="page-content">
+    <div class="intro" *ngIf="!editing">
+      <h1>My Notes</h1>
+      <p>Simple offline-first note prototype.</p>
+    </div>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <section class="editor" *ngIf="editing">
+      <ion-item>
+        <ion-label position="stacked">Title</ion-label>
+        <ion-input
+          [(ngModel)]="draft.title"
+          placeholder="Note title"
+          maxlength="255"
+          autofocus
+        ></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Content</ion-label>
+        <ion-textarea
+          [(ngModel)]="draft.content"
+          placeholder="Write your note..."
+          [autoGrow]="true"
+          rows="10"
+        ></ion-textarea>
+      </ion-item>
+
+      <div class="editor-actions">
+        <ion-button expand="block" (click)="save()" [disabled]="!draft.title.trim()">
+          Save Note
+        </ion-button>
+        <ion-button expand="block" fill="outline" (click)="cancel()">
+          Cancel
+        </ion-button>
+      </div>
+    </section>
+
+    <ion-list *ngIf="!editing">
+      <ion-item *ngFor="let note of notes">
+        <ion-label>
+          <h2>{{ note.title }}</h2>
+          <p>{{ note.content || 'Empty note' }}</p>
+          <small>{{ note.updatedAt | date:'short' }}</small>
+        </ion-label>
+        <ion-button slot="end" fill="clear" (click)="startEdit(note)">Edit</ion-button>
+        <ion-button slot="end" fill="clear" color="danger" (click)="remove(note)">Delete</ion-button>
+      </ion-item>
+
+      <ion-item *ngIf="notes.length === 0">
+        <ion-label>
+          <h2>No notes yet</h2>
+          <p>Tap New to create your first note.</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
   </div>
 </ion-content>
