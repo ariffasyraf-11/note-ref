@@ -1,82 +1,82 @@
 # Mobile Sync Guide
 
-## Current browser prototype
+## Current prototype
 
-The current browser prototype keeps **localStorage as the local database**.
+The mobile prototype now includes a minimal sync interface.
 
-Ionic UI -> localStorage -> Sync -> Laravel API -> MySQL
+The flow is:
 
-The mobile app does not connect directly to MySQL.
+```
+Ionic UI
+   |
+localStorage
+   |
+Sync
+   |
+Laravel API
+   |
+MySQL
+```
 
-## Sync indicator
+The mobile app does **not** connect directly to MySQL.
 
-The interface now has four states:
+## Sync behavior
 
-- **Syncing**: spinner appears only while a sync request is active.
-- **✓ All changes synced**: shown after a successful push/pull cycle.
-- **Sync failed**: shown when the API request fails. Local changes are kept.
-- **N pending**: shown when local notes still need synchronization.
+When a note is created or edited:
 
-Creating, editing, or deleting a note resets the indicator to neutral and marks the changed note as pending.
+- it is stored locally
+- `syncStatus` becomes `pending`
 
-## Browser testing
+When deleted:
 
-Keep localStorage for the current browser test. No SQLite migration is required for this branch.
+- the note is retained locally as a tombstone
+- `deletedAt` and `updatedAt` are set
+- `syncStatus` remains `pending`
 
-Development commands:
+When Sync is pressed:
 
-    npm install
-    ionic serve
+1. Pending notes are sent to `POST /api/notes/sync`.
+2. Accepted notes are marked `synced`.
+3. The app pulls changes from `GET /api/notes`.
+4. The returned cursor is stored locally.
+5. Deleted remote notes remain hidden from the note list.
 
-The development API is configured in:
+## Development configuration
 
-    src/environments/environment.ts
+The current development API is configured in:
 
-The current default is:
+```
+src/environments/environment.ts
+```
 
-    http://localhost:8000/api
+Default:
 
-## Sync contract
+```
+http://localhost:8000/api
+```
 
-The current browser implementation uses:
+When using a physical phone, replace `localhost` with the development computer's LAN address.
 
-- GET /api/notes
-- POST /api/notes/sync
-- uuid
-- title
-- content
-- updatedAt
-- deletedAt
-- syncStatus (local status)
+Example:
 
-## Next native-mobile phase
+```
+http://192.168.1.10:8000/api
+```
 
-The future native mobile version can replace only the persistence layer:
+The Laravel server must be reachable from the phone and configured for the required CORS policy when testing through a browser.
 
-Current browser version:
+## Production
 
-    Ionic UI
-       |
-    localStorage
-       |
-    Sync Service
-       |
-    Laravel API
+The production API is configured in:
 
-Future native version:
+```
+src/environments/environment.prod.ts
+```
 
-    Ionic UI
-       |
-    Capacitor SQLite
-       |
-    Sync Service
-       |
-    Laravel API
+Use an HTTPS Laravel API URL.
 
-This should **not require changing the current sync contract**. The UI and sync service should continue working with the same note model and API endpoints.
+The current prototype uses localStorage for browser compatibility. Before production offline support, move the persistence layer to Capacitor SQLite while keeping the sync contract.
 
-The native phase can use @capacitor-community/sqlite as the SQLite adapter. That work is intentionally deferred so the current browser test remains unchanged.
+## Known limitation
 
-## Known limitations
-
-The Laravel sync endpoint currently uses updatedAt as the basic conflict rule. Production synchronization should later add authentication, per-user ownership, stronger conflict handling, and a reliable server-side cursor.
+The current Laravel sync endpoint uses `updatedAt` as the basic conflict rule. A later production sync implementation should add authentication, per-user ownership, stronger conflict handling, and a reliable server-side sync cursor.
