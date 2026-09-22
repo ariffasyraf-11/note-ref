@@ -1,87 +1,110 @@
-# Note Ref — Mobile Prototype
+# Note Ref — Capacitor SQLite Test
 
-This branch contains the Ionic/Angular standalone mobile prototype for Note Ref.
+This branch is a **test version** based on `mobile-prototype`. It replaces browser `localStorage` note persistence with Capacitor SQLite for native mobile testing.
+
+## Test branch
+
+`feature/capacitor-sqlite-test`
+
+The original `mobile-prototype` branch is not modified by this test.
 
 ## Current scope
 
 - Ionic Angular standalone UI
 - Create, edit and delete notes
-- Offline browser persistence with `localStorage`
-- Mobile-oriented responsive UI
-- Environment-specific API configuration prepared for later Laravel integration
-- Capacitor Android dependency prepared for native development
+- Native local persistence using Capacitor SQLite
+- Local sync cursor stored in SQLite
+- Existing Laravel API sync flow retained
+- Native Capacitor build required for SQLite testing
 
-## Branch relationship
+## Architecture
 
-- `mobile` — clean Ionic/Angular standalone template
-- `mobile-prototype` — Note Ref mobile UI prototype
-- `editable-notes` — earlier sync/edit prototype based on the Laravel sync branch
-- `sync-fixes` — Laravel + browser sync prototype
+```text
+Ionic Angular
+      |
+      v
+Capacitor SQLite
+      |
+      v
+Sync Engine
+      |
+      v
+Laravel API
+      |
+      v
+MySQL
+```
 
-## Quick start
+The mobile app never connects directly to MySQL.
+
+## Setup
 
 Requirements:
 
 - Node.js LTS
 - npm
 - Ionic CLI
+- Android Studio for Android testing
+- Android SDK / emulator or physical Android device
 
-From this branch:
+Install dependencies:
 
 ```bash
 npm install
-ionic serve
 ```
 
-Open the local URL shown by Ionic.
-
-Run the normal checks before committing:
+Add/sync Android if needed:
 
 ```bash
-npm run lint
-npm test
+npx cap add android
+npx cap sync android
+```
+
+Build and sync:
+
+```bash
 npm run build
+npx cap sync android
 ```
 
-For a production browser build:
+Open Android Studio:
 
 ```bash
-npm run build -- --configuration production
+npx cap open android
 ```
 
-See:
+Run on an Android emulator or physical device.
 
-- `docs/mobile-development.md`
-- `docs/mobile-production.md`
+## SQLite test database
 
-## Configuration
+Database: `note_ref_test`
 
-Development API configuration is prepared in:
+Tables:
 
-```
-src/environments/environment.ts
-```
+- `notes`: uuid, title, content, updated_at, deleted_at, sync_status
+- `sync_state`: key, value
 
-Production API configuration is prepared in:
+The server sync cursor is stored in `sync_state.server_cursor`.
 
-```
-src/environments/environment.prod.ts
-```
+## Test checklist
 
-The current UI does not call the API yet; notes are still stored in browser `localStorage`.
+1. Launch the native Android app.
+2. Create a note.
+3. Close and reopen the app.
+4. Confirm the note remains.
+5. Edit the note and restart the app.
+6. Delete a note and restart the app.
+7. Create a note while offline.
+8. Reconnect to Laravel.
+9. Press **Sync**.
+10. Confirm the note reaches the server.
 
-## Planned architecture
+## Browser limitation
 
-```
-Ionic / Angular mobile
-        |
-        +-- Native: Capacitor SQLite
-        |       |
-        |       v
-        +---- Laravel API
-                |
-                v
-              MySQL
-```
+This branch intentionally targets the native Capacitor test environment. It does not fall back to `localStorage` when opened in a normal browser.
 
-The mobile app should never connect directly to MySQL.
+For browser-only development, continue using `mobile-prototype`.
+
+## Important
+
+This is a prototype/test implementation, not the final production storage layer. Future work can add authentication, per-user sync, conflict resolution, retry/backoff, encrypted SQLite, migrations and automated SQLite tests.
